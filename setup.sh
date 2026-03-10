@@ -24,18 +24,23 @@ dnf install -y -q git
 echo "[3/6] Installing Docker..."
 dnf install -y -q docker
 
-echo "[4/6] Installing Docker Compose plugin..."
+echo "[4/7] Installing Docker Buildx plugin..."
 DOCKER_CONFIG=/usr/local/lib/docker
 mkdir -p "$DOCKER_CONFIG/cli-plugins"
+BUILDX_VERSION=$(curl -s https://api.github.com/repos/docker/buildx/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+curl -SL "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-$(uname -m)" -o "$DOCKER_CONFIG/cli-plugins/docker-buildx"
+chmod +x "$DOCKER_CONFIG/cli-plugins/docker-buildx"
+
+echo "[5/7] Installing Docker Compose plugin..."
 COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
 curl -SL "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-linux-$(uname -m)" -o "$DOCKER_CONFIG/cli-plugins/docker-compose"
 chmod +x "$DOCKER_CONFIG/cli-plugins/docker-compose"
 
-echo "[5/6] Starting Docker service..."
+echo "[6/7] Starting Docker service..."
 systemctl start docker
 systemctl enable docker
 
-echo "[6/6] Adding '$ACTUAL_USER' to docker group (no sudo needed for docker)..."
+echo "[7/7] Adding '$ACTUAL_USER' to docker group (no sudo needed for docker)..."
 usermod -aG docker "$ACTUAL_USER"
 
 echo ""
