@@ -24,23 +24,34 @@ dnf install -y -q git
 echo "[3/6] Installing Docker..."
 dnf install -y -q docker
 
-echo "[4/7] Installing Docker Buildx plugin..."
+echo "[4/7] Detecting architecture..."
 DOCKER_CONFIG=/usr/local/lib/docker
 mkdir -p "$DOCKER_CONFIG/cli-plugins"
+RAW_ARCH=$(uname -m)
+if [ "$RAW_ARCH" = "aarch64" ]; then
+  ARCH="arm64"
+elif [ "$RAW_ARCH" = "x86_64" ]; then
+  ARCH="amd64"
+else
+  ARCH="$RAW_ARCH"
+fi
+echo "    Detected: $RAW_ARCH -> $ARCH"
+
+echo "[5/7] Installing Docker Buildx plugin..."
 BUILDX_VERSION=$(curl -s https://api.github.com/repos/docker/buildx/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
-curl -SL "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-$(uname -m)" -o "$DOCKER_CONFIG/cli-plugins/docker-buildx"
+curl -SL "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-${ARCH}" -o "$DOCKER_CONFIG/cli-plugins/docker-buildx"
 chmod +x "$DOCKER_CONFIG/cli-plugins/docker-buildx"
 
-echo "[5/7] Installing Docker Compose plugin..."
+echo "[6/7] Installing Docker Compose plugin..."
 COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
-curl -SL "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-linux-$(uname -m)" -o "$DOCKER_CONFIG/cli-plugins/docker-compose"
+curl -SL "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-linux-${RAW_ARCH}" -o "$DOCKER_CONFIG/cli-plugins/docker-compose"
 chmod +x "$DOCKER_CONFIG/cli-plugins/docker-compose"
 
-echo "[6/7] Starting Docker service..."
+echo "[7/8] Starting Docker service..."
 systemctl start docker
 systemctl enable docker
 
-echo "[7/7] Adding '$ACTUAL_USER' to docker group (no sudo needed for docker)..."
+echo "[8/8] Adding '$ACTUAL_USER' to docker group (no sudo needed for docker)..."
 usermod -aG docker "$ACTUAL_USER"
 
 echo ""
