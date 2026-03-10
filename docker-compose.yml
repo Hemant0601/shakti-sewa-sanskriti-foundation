@@ -1,0 +1,7 @@
+services:
+  s3f-website:
+    build: .
+    container_name: s3f-website
+    ports:
+      - "80:80"
+    restart: unless-stopped
