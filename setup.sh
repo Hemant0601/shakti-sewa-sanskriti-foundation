@@ -21,37 +21,21 @@ dnf update -y -q
 echo "[2/6] Installing Git..."
 dnf install -y -q git
 
-echo "[3/6] Installing Docker..."
-dnf install -y -q docker
+echo "[3/6] Removing old Docker (if any) & adding official Docker repo..."
+dnf remove -y -q docker docker-client docker-latest docker-engine 2>/dev/null || true
+rm -f /usr/local/lib/docker/cli-plugins/docker-buildx 2>/dev/null || true
+rm -f /usr/local/lib/docker/cli-plugins/docker-compose 2>/dev/null || true
+dnf install -y -q dnf-plugins-core
+dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 
-echo "[4/7] Detecting architecture..."
-DOCKER_CONFIG=/usr/local/lib/docker
-mkdir -p "$DOCKER_CONFIG/cli-plugins"
-RAW_ARCH=$(uname -m)
-if [ "$RAW_ARCH" = "aarch64" ]; then
-  ARCH="arm64"
-elif [ "$RAW_ARCH" = "x86_64" ]; then
-  ARCH="amd64"
-else
-  ARCH="$RAW_ARCH"
-fi
-echo "    Detected: $RAW_ARCH -> $ARCH"
+echo "[4/6] Installing Docker CE, Buildx & Compose from official repo..."
+dnf install -y -q docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-echo "[5/7] Installing Docker Buildx plugin..."
-BUILDX_VERSION=$(curl -s https://api.github.com/repos/docker/buildx/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
-curl -SL "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-${ARCH}" -o "$DOCKER_CONFIG/cli-plugins/docker-buildx"
-chmod +x "$DOCKER_CONFIG/cli-plugins/docker-buildx"
-
-echo "[6/7] Installing Docker Compose plugin..."
-COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
-curl -SL "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-linux-${RAW_ARCH}" -o "$DOCKER_CONFIG/cli-plugins/docker-compose"
-chmod +x "$DOCKER_CONFIG/cli-plugins/docker-compose"
-
-echo "[7/8] Starting Docker service..."
+echo "[5/6] Starting Docker service..."
 systemctl start docker
 systemctl enable docker
 
-echo "[8/8] Adding '$ACTUAL_USER' to docker group (no sudo needed for docker)..."
+echo "[6/6] Adding '$ACTUAL_USER' to docker group (no sudo needed for docker)..."
 usermod -aG docker "$ACTUAL_USER"
 
 echo ""
@@ -62,6 +46,7 @@ echo ""
 echo "Versions installed:"
 git --version
 docker --version
+docker buildx version
 docker compose version
 echo ""
 echo "IMPORTANT: Run this to activate docker group now:"
