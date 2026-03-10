@@ -13,31 +13,30 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-echo "[1/5] Updating system packages..."
+ACTUAL_USER="${SUDO_USER:-$USER}"
+
+echo "[1/6] Updating system packages..."
 dnf update -y -q
 
-echo "[2/5] Installing Docker..."
+echo "[2/6] Installing Git..."
+dnf install -y -q git
+
+echo "[3/6] Installing Docker..."
 dnf install -y -q docker
 
-echo "[3/5] Installing Docker Compose plugin..."
-# Install Docker Compose v2 as a CLI plugin
+echo "[4/6] Installing Docker Compose plugin..."
 DOCKER_CONFIG=/usr/local/lib/docker
 mkdir -p "$DOCKER_CONFIG/cli-plugins"
 COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
 curl -SL "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-linux-$(uname -m)" -o "$DOCKER_CONFIG/cli-plugins/docker-compose"
 chmod +x "$DOCKER_CONFIG/cli-plugins/docker-compose"
 
-echo "[4/5] Starting Docker service..."
+echo "[5/6] Starting Docker service..."
 systemctl start docker
 systemctl enable docker
 
-echo "[5/5] Adding current user to docker group..."
-if [ -n "${SUDO_USER:-}" ]; then
-  usermod -aG docker "$SUDO_USER"
-  echo "    Added '$SUDO_USER' to docker group."
-  echo "    (Log out and back in for group changes to take effect,"
-  echo "     or run: newgrp docker)"
-fi
+echo "[6/6] Adding '$ACTUAL_USER' to docker group (no sudo needed for docker)..."
+usermod -aG docker "$ACTUAL_USER"
 
 echo ""
 echo "============================================"
@@ -45,10 +44,16 @@ echo "  Setup complete!"
 echo "============================================"
 echo ""
 echo "Versions installed:"
+git --version
 docker --version
 docker compose version
 echo ""
-echo "To build and run the S3F website:"
+echo "IMPORTANT: Run this to activate docker group now:"
+echo "  newgrp docker"
+echo ""
+echo "Then clone and run (no sudo needed):"
+echo "  git clone https://github.com/Hemant0601/shakti-sewa-sanskriti-foundation.git"
+echo "  cd shakti-sewa-sanskriti-foundation"
 echo "  docker compose up -d --build"
 echo ""
 echo "The site will be available at http://<your-server-ip>"
