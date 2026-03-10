@@ -28,10 +28,6 @@ function HeroSection() {
       <div className="absolute bottom-32 right-16 w-32 h-32 bg-gold/10 rounded-full blur-3xl animate-float-slow" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 text-center">
-        <AnimateIn variant="fadeDown" duration={800}>
-          <p className="text-saffron font-heading text-2xl md:text-3xl mb-4 tracking-wider">Om</p>
-        </AnimateIn>
-
         <AnimateIn variant="fadeUp" delay={200} duration={900}>
           <h1 className="font-heading text-5xl md:text-7xl font-bold mb-6 leading-tight">
             Shakti Sewa Sanskriti

@@ -1,6 +1,22 @@
+import { useState } from 'react'
 import AnimateIn from '../components/AnimateIn'
 
 export default function Volunteer() {
+  const [form, setForm] = useState({ name: '', email: '', phone: '', city: '', interest: '', message: '' })
+  const [submitted, setSubmitted] = useState(false)
+
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    const subject = encodeURIComponent('Volunteer Registration - S3F')
+    const body = encodeURIComponent(
+      `Name: ${form.name}\nEmail: ${form.email}\nPhone: ${form.phone}\nCity: ${form.city}\nInterest Area: ${form.interest}\n\nMessage:\n${form.message}`
+    )
+    window.location.href = `mailto:s3ffoundation@gmail.com?subject=${subject}&body=${body}`
+    setSubmitted(true)
+  }
+
   return (
     <>
       <section className="relative bg-maroon text-white py-20 md:py-28 overflow-hidden">
@@ -67,17 +83,78 @@ export default function Volunteer() {
               <div className="bg-cream p-8 rounded-2xl shadow-xl sticky top-24">
                 <h3 className="font-heading text-2xl font-bold text-maroon mb-4 text-center">Volunteer Registration</h3>
                 <p className="text-gray-600 text-sm text-center mb-6">Fill out the form below to join our volunteer community and make a difference.</p>
-                <div className="bg-white rounded-xl p-6 text-center shadow-sm">
-                  <p className="text-gray-700 mb-6">Click the button below to fill out our volunteer registration form:</p>
-                  <a
-                    href="https://docs.google.com/forms/d/1r9BiS3bBA7EvyYL1rWih41ecT6ScVXJHYWfO8RKNffk/viewform"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block bg-saffron hover:bg-saffron-dark text-white px-8 py-3.5 rounded-full font-semibold transition-all duration-300 text-lg hover:scale-105 hover:shadow-xl hover:shadow-saffron/25 btn-ripple"
-                  >
-                    Register as Volunteer
-                  </a>
-                </div>
+
+                {submitted ? (
+                  <div className="bg-white rounded-xl p-8 text-center shadow-sm">
+                    <span className="text-5xl block mb-4">🙏</span>
+                    <h4 className="font-heading text-xl font-bold text-maroon mb-2">Thank You!</h4>
+                    <p className="text-gray-600 text-sm">Your email client should open with your details. Send the email to complete your registration.</p>
+                    <button onClick={() => setSubmitted(false)} className="mt-4 text-saffron font-semibold text-sm hover:underline">Fill again</button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="bg-white rounded-xl p-6 shadow-sm space-y-4">
+                    {[
+                      { name: 'name', label: 'Full Name', type: 'text', required: true },
+                      { name: 'email', label: 'Email Address', type: 'email', required: true },
+                      { name: 'phone', label: 'Phone Number', type: 'tel', required: true },
+                      { name: 'city', label: 'City', type: 'text', required: false },
+                    ].map((field) => (
+                      <div key={field.name}>
+                        <label htmlFor={`vol-${field.name}`} className="block text-sm font-medium text-gray-700 mb-1">
+                          {field.label} {field.required && <span className="text-red-400">*</span>}
+                        </label>
+                        <input
+                          type={field.type}
+                          id={`vol-${field.name}`}
+                          name={field.name}
+                          value={form[field.name]}
+                          onChange={handleChange}
+                          required={field.required}
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all duration-300 text-sm hover:border-saffron/50"
+                        />
+                      </div>
+                    ))}
+                    <div>
+                      <label htmlFor="vol-interest" className="block text-sm font-medium text-gray-700 mb-1">Area of Interest</label>
+                      <select
+                        id="vol-interest"
+                        name="interest"
+                        value={form.interest}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all duration-300 text-sm hover:border-saffron/50 bg-white"
+                      >
+                        <option value="">Select an area...</option>
+                        <option value="Anna Sewa">Anna Sewa (Food)</option>
+                        <option value="Vastra Sewa">Vastra Sewa (Clothing)</option>
+                        <option value="Vidya Sewa">Vidya Sewa (Education)</option>
+                        <option value="Vriddha Sewa">Vriddha Sewa (Elderly Care)</option>
+                        <option value="Paryavaran Sewa">Paryavaran Sewa (Environment)</option>
+                        <option value="Yog Sewa">Yog Sewa (Yoga)</option>
+                        <option value="Sanskriti">Sanskriti (Culture & Arts)</option>
+                        <option value="Shakti">Shakti (Women Empowerment)</option>
+                        <option value="Any">Open to any Sewa</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="vol-message" className="block text-sm font-medium text-gray-700 mb-1">Message (optional)</label>
+                      <textarea
+                        id="vol-message"
+                        name="message"
+                        value={form.message}
+                        onChange={handleChange}
+                        rows={3}
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-saffron focus:ring-2 focus:ring-saffron/20 outline-none transition-all duration-300 text-sm resize-none hover:border-saffron/50"
+                        placeholder="Tell us about yourself or how you'd like to help..."
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full bg-saffron hover:bg-saffron-dark text-white py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-saffron/25 btn-ripple"
+                    >
+                      Register as Volunteer
+                    </button>
+                  </form>
+                )}
                 <div className="mt-6 grid grid-cols-2 gap-3">
                   <div className="overflow-hidden rounded-xl"><img src="/images/paryavaran-sewa/paryavaran sewa 3.jpg" alt="Environment" className="h-32 w-full object-cover hover:scale-110 transition-transform duration-500" /></div>
                   <div className="overflow-hidden rounded-xl"><img src="/images/anna-sewa/anna sewa 2.jpg" alt="Anna Sewa" className="h-32 w-full object-cover hover:scale-110 transition-transform duration-500" /></div>

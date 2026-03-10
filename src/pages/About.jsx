@@ -9,8 +9,7 @@ export default function About() {
         <div className="absolute inset-0 bg-cover bg-center opacity-10" style={{ backgroundImage: "url('/images/sanskriti/sanskriti 4.jpg')" }} />
         <div className="absolute inset-0 bg-gradient-to-b from-maroon/80 to-maroon" />
         <div className="relative max-w-4xl mx-auto px-4 text-center">
-          <AnimateIn variant="fadeDown"><p className="text-saffron font-heading text-xl mb-3 tracking-wider">Om</p></AnimateIn>
-          <AnimateIn variant="fadeUp" delay={200}><h1 className="font-heading text-4xl md:text-6xl font-bold mb-4">About S3F</h1></AnimateIn>
+          <AnimateIn variant="fadeUp"><h1 className="font-heading text-4xl md:text-6xl font-bold mb-4">About S3F</h1></AnimateIn>
           <AnimateIn variant="fadeUp" delay={400}>
             <p className="text-gray-200 text-lg max-w-2xl mx-auto">
               Shakti Sewa Sanskriti Foundation is an NGO working towards making this world a better place with its several initiatives and projects.

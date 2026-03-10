@@ -68,7 +68,7 @@ export default function Footer() {
 
         <div className="border-t border-white/20 mt-10 pt-6 text-center text-sm text-gray-400">
           <p>&copy; {new Date().getFullYear()} Shakti Sewa Sanskriti Foundation. All rights reserved.</p>
-          <p className="mt-1 text-saffron/60">Om | Serving selflessly for a better world</p>
+          <p className="mt-1 text-saffron/60">Serving selflessly for a better world</p>
         </div>
       </div>
     </footer>
