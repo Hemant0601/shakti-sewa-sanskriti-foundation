@@ -9,9 +9,12 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           <AnimateIn variant="fadeUp">
             <div>
-              <h3 className="font-heading text-2xl font-bold text-saffron mb-4">
-                Shakti Sewa Sanskriti Foundation
-              </h3>
+              <div className="flex items-center gap-3 mb-4">
+                <img src="/images/s3f-logo.jpg" alt="S3F Logo" className="w-14 h-14 rounded-full object-cover" />
+                <h3 className="font-heading text-2xl font-bold text-saffron">
+                  Shakti Sewa Sanskriti Foundation
+                </h3>
+              </div>
               <p className="text-gray-300 text-sm leading-relaxed">
                 An NGO working towards making this world a better, healthier, happier and prosperous
                 place to live for coming generations.
