@@ -28,6 +28,8 @@ echo "   Done."
 echo ""
 echo "[2/6] Preparing nginx..."
 sudo systemctl stop nginx 2>/dev/null || true
+# Kill anything else on port 80 (e.g. leftover nginx, apache, etc.)
+sudo fuser -k 80/tcp 2>/dev/null || true
 
 # Replace nginx.conf with our clean version (no default server block)
 sudo cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.original 2>/dev/null || true
@@ -59,7 +61,21 @@ fi
 # certbot runs its own temp server on port 80 (nginx is stopped)
 echo ""
 echo "[4/6] Getting SSL certificate from Let's Encrypt..."
-echo "   Using standalone mode (certbot's own server on port 80)..."
+
+# Make absolutely sure port 80 is free for certbot
+sudo systemctl stop nginx 2>/dev/null || true
+sudo fuser -k 80/tcp 2>/dev/null || true
+sleep 2
+
+# Verify port 80 is free
+if sudo ss -tlnp | grep -q ':80 '; then
+    echo "   ERROR: Port 80 is still in use!"
+    sudo ss -tlnp | grep ':80 '
+    echo "   Please free port 80 and try again."
+    exit 1
+fi
+
+echo "   Port 80 is free. Using standalone mode..."
 sudo certbot certonly \
     --standalone \
     -d "$DOMAIN" \
