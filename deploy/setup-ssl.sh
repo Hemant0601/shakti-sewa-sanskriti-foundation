@@ -100,20 +100,47 @@ sudo systemctl start nginx
 echo "   Nginx is running with SSL!"
 
 # ---- Step 6: Auto-renewal ----
+# Amazon Linux 2023 does NOT ship crontab, so we use a systemd timer instead.
+# The cert was issued in --standalone mode, so renewal needs port 80 free:
+# we stop nginx before renewing and start it again afterwards.
 echo ""
-echo "[6/6] Setting up auto-renewal..."
-# Create a renewal hook to reload nginx after cert renewal
-sudo mkdir -p /etc/letsencrypt/renewal-hooks/post
-cat << 'HOOK' | sudo tee /etc/letsencrypt/renewal-hooks/post/reload-nginx.sh > /dev/null
-#!/bin/bash
-systemctl reload nginx
-HOOK
-sudo chmod +x /etc/letsencrypt/renewal-hooks/post/reload-nginx.sh
+echo "[6/6] Setting up auto-renewal (systemd timer)..."
 
-# Add cron for renewal (stop nginx, renew, start nginx)
-(sudo crontab -l 2>/dev/null | grep -v certbot; echo "0 3 * * * /usr/bin/certbot renew --quiet --pre-hook 'systemctl stop nginx' --post-hook 'systemctl start nginx'") | sudo crontab -
+CERTBOT_BIN="$(command -v certbot || echo /usr/bin/certbot)"
 
-echo "   Auto-renewal configured."
+# Renewal service: stop nginx (free port 80) -> renew -> start nginx
+sudo tee /etc/systemd/system/certbot-renew.service > /dev/null <<EOF
+[Unit]
+Description=Certbot Renewal for $DOMAIN
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=${CERTBOT_BIN} renew --quiet --pre-hook "systemctl stop nginx" --post-hook "systemctl start nginx"
+EOF
+
+# Timer: run twice daily with a randomized delay (Let's Encrypt best practice)
+sudo tee /etc/systemd/system/certbot-renew.timer > /dev/null <<'EOF'
+[Unit]
+Description=Run certbot renewal twice daily
+
+[Timer]
+OnCalendar=*-*-* 03,15:00:00
+RandomizedDelaySec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now certbot-renew.timer
+
+echo "   Auto-renewal configured (systemd timer: certbot-renew.timer)."
+echo "   Verifying renewal works (dry run)..."
+sudo certbot renew --dry-run && echo "   Auto-renewal verified!"
+sudo systemctl list-timers certbot-renew.timer --no-pager 2>/dev/null || true
 
 # ---- Done ----
 echo ""
@@ -127,8 +154,9 @@ echo "  Both should be live now!"
 echo "========================================="
 echo ""
 echo "Useful commands:"
-echo "  docker compose logs -f           # App logs"
-echo "  sudo journalctl -u nginx -f      # Nginx logs"
-echo "  sudo certbot certificates        # SSL cert info"
-echo "  sudo certbot renew --dry-run     # Test renewal"
+echo "  docker compose logs -f                        # App logs"
+echo "  sudo journalctl -u nginx -f                   # Nginx logs"
+echo "  sudo certbot certificates                     # SSL cert info"
+echo "  sudo certbot renew --dry-run                  # Test renewal"
+echo "  sudo systemctl list-timers certbot-renew.timer  # Check auto-renewal schedule"
 echo "  sudo nginx -t && sudo systemctl reload nginx  # Reload nginx"
