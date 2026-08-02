@@ -21,15 +21,19 @@ echo "  Branch: $BRANCH"
 echo "========================================="
 
 echo ""
-echo "[1/3] Pulling latest code from origin/$BRANCH..."
+echo "[1/4] Pulling latest code from origin/$BRANCH..."
 git pull origin "$BRANCH"
 
 echo ""
-echo "[2/3] Rebuilding and restarting the container..."
+echo "[2/4] Rebuilding and restarting the container..."
 docker compose up -d --build
 
 echo ""
-echo "[3/3] Reloading nginx..."
+echo "[3/4] Ensuring SSL auto-renewal is configured..."
+bash "$PROJECT_DIR/deploy/setup-renewal.sh"
+
+echo ""
+echo "[4/4] Reloading nginx..."
 if sudo nginx -t; then
     sudo systemctl reload nginx
     echo "   Nginx reloaded."

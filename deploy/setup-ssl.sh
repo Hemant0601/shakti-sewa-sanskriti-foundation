@@ -100,47 +100,9 @@ sudo systemctl start nginx
 echo "   Nginx is running with SSL!"
 
 # ---- Step 6: Auto-renewal ----
-# Amazon Linux 2023 does NOT ship crontab, so we use a systemd timer instead.
-# The cert was issued in --standalone mode, so renewal needs port 80 free:
-# we stop nginx before renewing and start it again afterwards.
 echo ""
 echo "[6/6] Setting up auto-renewal (systemd timer)..."
-
-CERTBOT_BIN="$(command -v certbot || echo /usr/bin/certbot)"
-
-# Renewal service: stop nginx (free port 80) -> renew -> start nginx
-sudo tee /etc/systemd/system/certbot-renew.service > /dev/null <<EOF
-[Unit]
-Description=Certbot Renewal for $DOMAIN
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=oneshot
-ExecStart=${CERTBOT_BIN} renew --quiet --pre-hook "systemctl stop nginx" --post-hook "systemctl start nginx"
-EOF
-
-# Timer: run twice daily with a randomized delay (Let's Encrypt best practice)
-sudo tee /etc/systemd/system/certbot-renew.timer > /dev/null <<'EOF'
-[Unit]
-Description=Run certbot renewal twice daily
-
-[Timer]
-OnCalendar=*-*-* 03,15:00:00
-RandomizedDelaySec=1h
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl enable --now certbot-renew.timer
-
-echo "   Auto-renewal configured (systemd timer: certbot-renew.timer)."
-echo "   Verifying renewal works (dry run)..."
-sudo certbot renew --dry-run && echo "   Auto-renewal verified!"
-sudo systemctl list-timers certbot-renew.timer --no-pager 2>/dev/null || true
+bash "$PROJECT_DIR/deploy/setup-renewal.sh" "$DOMAIN"
 
 # ---- Done ----
 echo ""
